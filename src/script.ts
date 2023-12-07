@@ -49,9 +49,6 @@ function main() {
 
     // Create a buffer to put positions in
     const positionBuffer = gl.createBuffer();
-    if (!positionBuffer) {
-        console.error('Failed to create buffer');
-    }
     // Bind it to array buffer
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     // For a triangle
@@ -74,20 +71,16 @@ function main() {
 
     // Create a buffer to put colors in
     const colorBuffer = gl.createBuffer();
-    if (!colorBuffer) {
-        console.error('Failed to create buffer');
-    }
     // Bind it to array buffer
     gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-    // Put colors into buffer
+    //Put colors into buffer
     const colors = new Uint8Array([
         200, 70, 120,
         80, 70, 200,
         70, 200, 210,
-        200, 70, 120
+        200, 70, 120,
     ]);
     gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
-
 
     let cameraAngle: number = degToRad(0);
 
@@ -99,15 +92,18 @@ function main() {
         gl.clearDepth(1.0); // Clear everything
 
         // tell webgl to cull faces
-        gl.enable(gl.CULL_FACE);
+        // gl.enable(gl.CULL_FACE);
+
         // turn on depth testing
         gl.enable(gl.DEPTH_TEST);
 
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
         gl.vertexAttribPointer(positionLocation, dim, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(positionLocation);
 
+        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
         gl.vertexAttribPointer(colorLocation, dim, gl.UNSIGNED_BYTE, true, 0, 0);
         gl.enableVertexAttribArray(colorLocation);
 
@@ -121,19 +117,19 @@ function main() {
 
         // Compute a matrix for the camera
         let cameraMatrix = twgl.m4.rotationY(cameraAngle);
-        cameraMatrix = twgl.m4.translate(cameraMatrix, [0, 0, 1]);
+        cameraMatrix = twgl.m4.translate(cameraMatrix, [0, 0, 2]);
         const viewMatrix = twgl.m4.inverse(cameraMatrix);
 
         // Compute a view projection matrix
         const viewProjectionMatrix = twgl.m4.multiply(projectionMatrix, viewMatrix);
 
-        gl.uniformMatrix4fv(matrixLocation, false, viewMatrix);
+        gl.uniformMatrix4fv(matrixLocation, false, viewProjectionMatrix);
 
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
     drawScene();
     document.getElementById('angleSlider').addEventListener('input', function (this: HTMLInputElement) {
-        cameraAngle = parseInt(this.value);
+        cameraAngle = degToRad(parseInt(this.value));
         drawScene();
     });
 
