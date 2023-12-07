@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Exercises</title>
+    <link rel="stylesheet" href="./style.css" />
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.28/esri/themes/light/main.css"
+    />
+  </head>
+  <body>
+    <!-- <div id="viewDiv"></div> -->
+    <canvas class="webgl"></canvas>
+    <input
+      type="range"
+      id="angleSlider"
+      min="-360"
+      max="360"
+      value="0"
+      step="1"
+    />
+    <script src="https://js.arcgis.com/4.28/"></script>
+    <script type="module" src="./script.ts"></script>
+  </body>
+</html>
