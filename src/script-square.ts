@@ -38,6 +38,7 @@ function main() {
 
     // Setup GLSL program
     const program = createProgram(gl, vsSource, fsSource);
+    gl.useProgram(program);
 
     // Look up vertex data locations
     const positionLocation = gl.getAttribLocation(program, 'a_Position');
@@ -68,6 +69,8 @@ function main() {
     ]);
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
+    gl.vertexAttribPointer(positionLocation, dim, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(positionLocation);
 
     // Create a buffer to put colors in
     const colorBuffer = gl.createBuffer();
@@ -82,7 +85,12 @@ function main() {
     ]);
     gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
 
+    gl.vertexAttribPointer(colorLocation, dim, gl.UNSIGNED_BYTE, true, 0, 0);
+    gl.enableVertexAttribArray(colorLocation);
+
     let cameraAngle: number = degToRad(0);
+
+
 
     function drawScene() {
         const { width, height } = resizeCanvasToDisplaySize(canvas);
@@ -98,16 +106,6 @@ function main() {
         gl.enable(gl.DEPTH_TEST);
 
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-        gl.vertexAttribPointer(positionLocation, dim, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(positionLocation);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-        gl.vertexAttribPointer(colorLocation, dim, gl.UNSIGNED_BYTE, true, 0, 0);
-        gl.enableVertexAttribArray(colorLocation);
-
-        gl.useProgram(program);
 
         // Compute projection matrix
         const aspect = width / height;
