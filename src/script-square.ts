@@ -30,9 +30,10 @@ function main() {
     precision mediump float;
     
     varying vec4 v_Color;
+    uniform float u_time;
     
     void main() {
-        gl_FragColor = v_Color;
+        gl_FragColor = vec4(sin(u_time) * v_Color[0], cos(u_time) * v_Color[1], v_Color[2], 255.0);
     }
     `;
 
@@ -52,15 +53,7 @@ function main() {
     const positionBuffer = gl.createBuffer();
     // Bind it to array buffer
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    // For a triangle
-    // Put geometry into buffer
-    // const vertices = new Float32Array([
-    //     1.0, 0.0, 0.0,
-    //     0.0, 1.0, 0.0,
-    //     0.0, 0.0, 1.0
-    // ]);
 
-    // For a square
     const vertices = new Float32Array([
         -0.5, 0.5, 0.0,
         -0.5, -0.5, 0.0,
@@ -123,14 +116,19 @@ function main() {
 
         gl.uniformMatrix4fv(matrixLocation, false, viewProjectionMatrix);
 
+        const currentTime = performance.now() / 1000;
+        gl.uniform1f(timeLocation, currentTime);
+
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
-    drawScene();
+
     document.getElementById('angleSlider').addEventListener('input', function (this: HTMLInputElement) {
         cameraAngle = degToRad(parseInt(this.value));
-        drawScene();
     });
-
+    window.requestAnimationFrame(function renderLoop() {
+        drawScene();
+        window.requestAnimationFrame(renderLoop);
+    });
 }
 
 main();
