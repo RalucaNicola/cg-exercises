@@ -17,6 +17,11 @@ class ExternalRenderer {
     programUniformModelViewMatrix: ArrayBuffer = null;
     program: WebGLProgram = null;
     view: SceneView = null;
+    localOrigin: Point = new Point({
+        x: -12978323.50406812,
+        y: 4017074.013392332,
+        z: 292.77160461955384
+    });
 
     constructor(private view2: SceneView) {
         this.view = view2;
@@ -25,7 +30,20 @@ class ExternalRenderer {
         this.initShaders(context);
     }
     render(context: __esri.RenderContext) {
-        // console.log("From render", context);
+        const gl = context.gl;
+
+        // Set some global WebGL state
+        // State will be reset between each render() call
+        gl.enable(gl.DEPTH_TEST);
+        gl.disable(gl.CULL_FACE);
+        gl.disable(gl.BLEND);
+        gl.useProgram(this.program);
+
+        gl.uniformMatrix4fv(
+            this.programUniformProjectionMatrix,
+            false,
+            context.camera.projectionMatrix
+        );
     }
 
     initShaders(context: __esri.RenderContext) {
@@ -63,7 +81,6 @@ class ExternalRenderer {
         }
         gl.useProgram(this.program);
 
-
         // Look up vertex data locations
         this.programAttribVertexPosition = gl.getAttribLocation(this.program, 'a_Position');
         gl.enableVertexAttribArray(this.programAttribVertexPosition);
@@ -74,6 +91,19 @@ class ExternalRenderer {
         this.programUniformModelViewMatrix = gl.getUniformLocation(this.program, "uModelViewMatrix");
 
     }
+
+    createVertexBuffer(gl: WebGL2RenderingContext, data: Array<number>) {
+        const buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+
+        // We have filled vertex buffers in 64bit precision,
+        // convert to a format compatible with WebGL
+        const float32Data = new Float32Array(data);
+
+        gl.bufferData(gl.ARRAY_BUFFER, float32Data, gl.STATIC_DRAW);
+        return buffer;
+    }
+
 }
 
 function main() {
@@ -84,11 +114,17 @@ function main() {
             basemap: "hybrid",
             ground: "world-elevation"
         }),
-        camera: new Camera({
-            position: new Point({ longitude: -168.491, latitude: 23.648, z: 19175402.86 }),
-            heading: 360.00,
-            tilt: 1.37
-        }),
+
+        camera: {
+            position: {
+                x: -12977859.07,
+                y: 4016696.94,
+                z: 348.61,
+                spatialReference: { wkid: 102100 }
+            },
+            heading: 316,
+            tilt: 85
+        },
 
         qualityProfile: "high",
 
@@ -108,7 +144,7 @@ function main() {
         externalRenderers.add(view, renderer);
     });
 
-
+    (window as any).view = view;
 
 }
 

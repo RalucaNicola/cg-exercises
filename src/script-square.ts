@@ -79,6 +79,7 @@ function main() {
     gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
 
     gl.vertexAttribPointer(colorLocation, dim, gl.UNSIGNED_BYTE, true, 0, 0);
+
     gl.enableVertexAttribArray(colorLocation);
 
     let cameraAngle: number = degToRad(0);
