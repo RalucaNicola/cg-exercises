@@ -15,7 +15,7 @@ const rotate = {
 const translate = {
     x: 0,
     y: 0,
-    z: -1
+    z: -30
 }
 const projection = {
     fov: 45,
@@ -36,15 +36,15 @@ function setUpGUI() {
 
     const rotationFolder = gui.addFolder('Rotation');
 
-    rotationFolder.add(rotate, "x", 0, 180, 1);
-    rotationFolder.add(rotate, "y", 0, 180, 1);
-    rotationFolder.add(rotate, "z", 0, 180, 1);
+    rotationFolder.add(rotate, "x", -180, 180, 1);
+    rotationFolder.add(rotate, "y", -180, 180, 1);
+    rotationFolder.add(rotate, "z", -180, 180, 1);
 
     const translationFolder = gui.addFolder('Translation');
 
-    translationFolder.add(translate, "x", -10, 10, 0.1);
-    translationFolder.add(translate, "y", -10, 10, 0.1);
-    translationFolder.add(translate, "z", -10, 10, 0.1);
+    translationFolder.add(translate, "x", -50, 50, 0.1);
+    translationFolder.add(translate, "y", -50, 50, 0.1);
+    translationFolder.add(translate, "z", -50, 50, 0.1);
 
     const projectionFolder = gui.addFolder('Projection');
 
@@ -72,14 +72,14 @@ function createCubeVertices(size: number) {
         -k, -k, -k  // 7
     ]);
     const colors = new Uint8Array([
-        0, 0, 255, // 0
-        0, 255, 0, // 1
-        0, 255, 0, // 2
-        0, 0, 255, // 3
-        255, 0, 0, // 4
-        0, 255, 0, // 5
-        0, 255, 0, // 6
-        255, 0, 0 // 7
+        230, 188, 223, // 0
+        76, 142, 232, // 1
+        76, 142, 232, // 2
+        230, 188, 223, // 3
+        230, 188, 223, // 4
+        76, 142, 232, // 5
+        76, 142, 232, // 6
+        230, 188, 223 // 7
     ]);
     const indices = new Uint16Array([
         0, 1, 2,
@@ -102,16 +102,18 @@ function createCubeVertices(size: number) {
 type CubeParameters = {
     xTranslation: number,
     yTranslation: number,
-    zTranslation: number
+    zTranslation: number,
+    rotation: "x" | "y" | "z"
 }
 
 function main() {
     const cubes: CubeParameters[] = [];
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 50; i++) {
         cubes.push({
-            xTranslation: 50 - Math.random() * 100,
-            yTranslation: 50 - Math.random() * 100,
-            zTranslation: 50 - Math.random() * 100,
+            xTranslation: 20 - Math.random() * 40,
+            yTranslation: 20 - Math.random() * 40,
+            zTranslation: 20 - Math.random() * 40,
+            rotation: Math.random() * 3 < 1 ? "x" : Math.random() * 3 < 2 ? "y" : "z",
         })
     }
     // Get a WebGL context
@@ -158,7 +160,7 @@ function main() {
     const uViewMatrix = gl.getUniformLocation(program, "u_ViewMatrix");
     const uProjectionMatrix = gl.getUniformLocation(program, "u_ProjectionMatrix");
 
-    const { positions, colors, indices } = createCubeVertices(10);
+    const { positions, colors, indices } = createCubeVertices(4);
     const attributes = {
         a_position: {
             data: positions,
@@ -196,38 +198,34 @@ function main() {
 
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+        // Compute view matrix
+        const viewMatrix = mat4.create();
+        mat4.translate(viewMatrix, viewMatrix, [translate.x, translate.y, translate.z]);
+        mat4.rotateX(viewMatrix, viewMatrix, degToRad(rotate.x));
+        mat4.rotateY(viewMatrix, viewMatrix, degToRad(rotate.y));
+        mat4.rotateZ(viewMatrix, viewMatrix, degToRad(rotate.z));
+        mat4.scale(viewMatrix, viewMatrix, [scale.x, scale.y, scale.z]);
 
+        gl.uniformMatrix4fv(uViewMatrix, false, viewMatrix);
 
+        // Compute projection matrix
+        const projectionMatrix = mat4.create();
+        mat4.perspective(projectionMatrix, degToRad(projection.fov), width / height, projection.near, projection.far);
+        // mat4.ortho(projectionMatrix, -width / 256, width / 256, -height / 256, height / 256, projection.near, projection.far);
+        gl.uniformMatrix4fv(uProjectionMatrix, false, projectionMatrix);
+        const time = performance.now() / 100;
 
         cubes.forEach((cube) => {
             const modelMatrix = mat4.create();
-            mat4.scale(modelMatrix, modelMatrix, [0.005, 0.005, 0.005]);
+            mat4.scale(modelMatrix, modelMatrix, [0.5, 0.5, 0.5]);
             mat4.translate(modelMatrix, modelMatrix, [cube.xTranslation, cube.yTranslation, cube.zTranslation]);
+            if (cube.rotation === 'x') { mat4.rotateX(modelMatrix, modelMatrix, degToRad(time % 360)); }
+            else if (cube.rotation === 'y') { mat4.rotateY(modelMatrix, modelMatrix, degToRad(time % 360)); }
+            else { mat4.rotateZ(modelMatrix, modelMatrix, degToRad(time % 360)); }
             gl.uniformMatrix4fv(uModelMatrix, false, modelMatrix);
-            // Compute view matrix
-            const viewMatrix = mat4.create();
-            mat4.translate(viewMatrix, viewMatrix, [translate.x, translate.y, translate.z]);
-            mat4.rotateX(viewMatrix, viewMatrix, degToRad(rotate.x));
-            mat4.rotateY(viewMatrix, viewMatrix, degToRad(rotate.y));
-            mat4.rotateZ(viewMatrix, viewMatrix, degToRad(rotate.z));
-            mat4.scale(viewMatrix, viewMatrix, [scale.x, scale.y, scale.z]);
 
-            gl.uniformMatrix4fv(uViewMatrix, false, viewMatrix);
-
-            // Compute projection matrix
-            const projectionMatrix = mat4.create();
-            mat4.perspective(projectionMatrix, degToRad(projection.fov), width / height, projection.near, projection.far);
-            // mat4.ortho(projectionMatrix, -width / 256, width / 256, -height / 256, height / 256, projection.near, projection.far);
-            gl.uniformMatrix4fv(uProjectionMatrix, false, projectionMatrix);
             gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
         });
-
-        // // Compute model matrix
-        // const modelMatrix = mat4.create();
-        // mat4.scale(modelMatrix, modelMatrix, [0.1, 0.1, 0.1]);
-        // gl.uniformMatrix4fv(uModelMatrix, false, modelMatrix);
-
-        // gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
 
     }
     window.requestAnimationFrame(function renderLoop() {
