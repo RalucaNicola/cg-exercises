@@ -9,9 +9,6 @@ import { mat4 } from 'gl-matrix';
 
 let view: SceneView;
 
-
-
-
 function main() {
 
     view = new SceneView({
@@ -57,7 +54,6 @@ function main() {
 
 class ExternalRenderer {
 
-
     // Shader attribute and uniform locations
     programAttribVertexPosition: ArrayBuffer = null;
     programAttribVertexColor: ArrayBuffer = null;
@@ -77,14 +73,15 @@ class ExternalRenderer {
     localOriginRender: any = null;
     inputToRender: any = null;
 
-
     constructor(private view2: SceneView) {
         this.view = view2;
     }
+
     setup(context: __esri.RenderContext) {
         this.initShaders(context);
         this.initData(context);
     }
+
     render(context: __esri.RenderContext) {
         console.log("render");
         const { gl, camera } = context;
@@ -182,7 +179,6 @@ class ExternalRenderer {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vboColor);
         gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(colors), gl.STATIC_DRAW);
 
-
         this.ibo = gl.createBuffer();
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ibo);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
@@ -214,14 +210,14 @@ function createCubeVertices(size: number) {
         -k, -k, -k  // 7
     ]);
     const colors = new Uint8Array([
-        230, 188, 223, // 0
-        76, 142, 232, // 1
-        76, 142, 232, // 2
-        230, 188, 223, // 3
-        230, 188, 223, // 4
-        76, 142, 232, // 5
-        76, 142, 232, // 6
-        230, 188, 223 // 7
+        255, 0, 0, // 0
+        0, 0, 255, // 1
+        0, 0, 255, // 2
+        255, 0, 0, // 3
+        255, 0, 0, // 4
+        0, 0, 255, // 5
+        0, 0, 255, // 6
+        255, 0, 0 // 7
     ]);
     const indices = new Uint16Array([
         0, 1, 2,
