@@ -83,7 +83,8 @@ class ExternalRenderer {
     }
 
     render(context: __esri.RenderContext) {
-        console.log("render");
+        // time since application started, in miliseconds
+        const time = performance.now();
         const { gl, camera } = context;
 
         // Set some global WebGL state
@@ -110,7 +111,15 @@ class ExternalRenderer {
         );
 
         mat4.identity(this.tempMatrix4);
-        mat4.translate(this.tempMatrix4, this.tempMatrix4, this.localOriginRender);
+        const angle = degToRad((time / 10) % 360);
+        const x = Math.cos(angle) * 20;
+        const y = Math.sin(angle) * 20;
+        const translation = new Float32Array([this.localOriginRender[0] + x, this.localOriginRender[1] + y, this.localOriginRender[2]]);
+        console.log(translation);
+        mat4.translate(this.tempMatrix4, this.tempMatrix4, translation);
+        mat4.rotateZ(this.tempMatrix4, this.tempMatrix4, angle);
+        const scaleFactor = Math.sin(angle) * 0.5 + 1;
+        mat4.scale(this.tempMatrix4, this.tempMatrix4, [scaleFactor, scaleFactor, scaleFactor]);
         mat4.multiply(this.tempMatrix4, camera.viewMatrix, this.tempMatrix4);
         gl.uniformMatrix4fv(
             this.programUniformModelViewMatrix,
@@ -119,6 +128,7 @@ class ExternalRenderer {
         );
 
         gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
+        externalRenderers.requestRender(this.view);
     }
 
     initShaders(context: __esri.RenderContext) {
