@@ -19,10 +19,10 @@ function main() {
 
     varying vec4 v_color;
 
-    uniform mat4 u_viewMatrix;
+    uniform mat4 u_world2ScreenMatrix;
 
     void main() {
-        gl_Position = u_viewMatrix * a_position;
+        gl_Position = u_world2ScreenMatrix * a_position;
         gl_PointSize = 5.0;
         v_color = a_color;
     }
@@ -47,14 +47,21 @@ function main() {
     const colorLocation = gl.getAttribLocation(program, 'a_color');
 
     // Look up uniform locations
-    const viewMatrixLocation = gl.getUniformLocation(program, 'u_viewMatrix');
+    const world2ScreenMatrixLocation = gl.getUniformLocation(program, 'u_world2ScreenMatrix');
 
-    const count = 1000;
     // Create a buffer to put positions in
     const positionBuffer = gl.createBuffer();
     // Bind it to array buffer
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    const vertices = new Float32Array(getRandomPositions(count));
+    const vertices = new Float32Array([
+        0, 0, 0,
+        250, 0, 0, // x positive
+        -250, 0, 0, // x negative
+        0, 250, 0, // y positive
+        0, -250, 0, // y negative
+        0, 0, 500, // z positive
+        0, 0, -500, // z negative
+    ]);
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
 
@@ -62,7 +69,15 @@ function main() {
     const colorBuffer = gl.createBuffer();
     // Bind it to array buffer
     gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-    const colors = new Float32Array(getRandomColors(count));
+    const colors = new Float32Array([
+        1, 1, 1, 1,
+        1, 0, 0, 1,
+        0.5, 0, 0, 1,
+        0, 1, 0, 1,
+        0, 0.5, 0, 1,
+        0, 0, 1, 1,
+        0, 0, 0.5, 1
+    ]);
     gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
 
     /* Render the scene */
@@ -88,31 +103,12 @@ function main() {
     gl.vertexAttribPointer(colorLocation, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(colorLocation);
 
-    gl.uniformMatrix4fv(viewMatrixLocation, false, new Float32Array([1 / 500, 0, 0, 0, 0, 1 / 500, 0, 0, 0, 0, 1 / 1000, 0, 0, 0, 0, 1]));
+    gl.uniformMatrix4fv(world2ScreenMatrixLocation, false, new Float32Array([1 / 500, 0, 0, 0, 0, 1 / 500, 0, 0, 0, 0, 1 / 1000, 0, 0, 0, 0, 1]));
 
-    gl.drawArrays(gl.POINTS, 0, count);
+    gl.drawArrays(gl.POINTS, 0, 7);
 }
 
 main();
-
-function getRandomPositions(count: number) {
-    const positions = [];
-    for (let i = 0; i < count * 3; i++) {
-        positions.push(Math.random() * 1000 - 500);
-    }
-    return positions;
-}
-
-function getRandomColors(count: number) {
-    const colors = [];
-    for (let i = 0; i < count * 4; i += 4) {
-        colors.push(Math.random());
-        colors.push(Math.random());
-        colors.push(Math.random());
-        colors.push(1.0);
-    }
-    return colors;
-}
 
 /**
  * Helper functions
