@@ -1,5 +1,25 @@
-import * as twgl from 'twgl.js';
+import GUI from 'lil-gui';
+import { mat4 } from 'gl-matrix';
 
+// rotation parameters
+const rotate = {
+    x: 0,
+    y: 0,
+    z: 0
+}
+
+function setUpGUI() {
+
+    const gui = new GUI();
+    const rotationFolder = gui.addFolder('Rotation');
+
+    rotationFolder.add(rotate, "x", -180, 180, 1);
+    rotationFolder.add(rotate, "y", -180, 180, 1);
+    rotationFolder.add(rotate, "z", -180, 180, 1);
+
+}
+// UI sliders to configure matrix parameters
+setUpGUI();
 
 function main() {
     const dim = 3;
@@ -82,8 +102,6 @@ function main() {
 
     gl.enableVertexAttribArray(colorLocation);
 
-    let cameraAngle: number = degToRad(0);
-
 
 
     function drawScene() {
@@ -105,15 +123,21 @@ function main() {
         const aspect = width / height;
         const zNear = 1;
         const zFar = -1;
-        const projectionMatrix = twgl.m4.perspective(degToRad(60), aspect, zNear, zFar);
+        const projectionMatrix = mat4.create();
+        mat4.perspective(projectionMatrix, degToRad(60), aspect, zNear, zFar);
 
         // Compute a matrix for the camera
-        let cameraMatrix = twgl.m4.rotationY(cameraAngle);
-        cameraMatrix = twgl.m4.translate(cameraMatrix, [0, 0, 2]);
-        const viewMatrix = twgl.m4.inverse(cameraMatrix);
+        let cameraMatrix = mat4.create();
+        mat4.rotateY(cameraMatrix, cameraMatrix, degToRad(rotate.y));
+        mat4.rotateX(cameraMatrix, cameraMatrix, degToRad(rotate.x));
+        mat4.rotateZ(cameraMatrix, cameraMatrix, degToRad(rotate.z));
+        mat4.translate(cameraMatrix, cameraMatrix, [0, 0, 2]);
+        let viewMatrix = mat4.create();
+        mat4.invert(viewMatrix, cameraMatrix);
 
         // Compute a view projection matrix
-        const viewProjectionMatrix = twgl.m4.multiply(projectionMatrix, viewMatrix);
+        const viewProjectionMatrix = mat4.create();
+        mat4.multiply(viewProjectionMatrix, projectionMatrix, viewMatrix);
 
         gl.uniformMatrix4fv(matrixLocation, false, viewProjectionMatrix);
 
@@ -123,9 +147,6 @@ function main() {
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
 
-    document.getElementById('angleSlider').addEventListener('input', function (this: HTMLInputElement) {
-        cameraAngle = degToRad(parseInt(this.value));
-    });
     window.requestAnimationFrame(function renderLoop() {
         drawScene();
         window.requestAnimationFrame(renderLoop);
