@@ -9,12 +9,13 @@
   },
   "devDependencies": {
     "lil-gui": "^0.19.1",
+    "tslib": "^2.6.2",
     "twgl.js": "^5.5.3",
     "typescript": "^4.9.5",
     "vite": "^4.5.0"
   },
   "dependencies": {
-    "@arcgis/core": "^4.28.10",
+    "@arcgis/core": "^4.30.0-next.20240202",
     "gl-matrix": "^3.4.3"
   }
 }
