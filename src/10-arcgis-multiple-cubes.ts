@@ -44,6 +44,11 @@ const points = [{
     x: 950764.2510258518,
     y: 6002207.418580964,
     z: 450
+}, {
+    x: 950691.491676274,
+    y: 6002265.997617188,
+    z: 450,
+    color: [255, 255, 0]
 }]
 
 
@@ -127,9 +132,7 @@ class AddGeometryRenderPass extends RenderNode {
 
         // Program attributes
         this.programAttribVertexPosition = gl.getAttribLocation(this.program, "a_position");
-        gl.enableVertexAttribArray(this.programAttribVertexPosition);
         this.programAttribVertexColor = gl.getAttribLocation(this.program, "a_color");
-        gl.enableVertexAttribArray(this.programAttribVertexColor);
         // Program uniforms
         this.programUniformProjectionMatrix = gl.getUniformLocation(this.program, "u_projectionMatrix");
         this.programUniformModelViewMatrix = gl.getUniformLocation(this.program, "u_modelViewMatrix");

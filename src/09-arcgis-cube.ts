@@ -111,9 +111,7 @@ class AddGeometryRenderPass extends RenderNode {
 
         // Program attributes
         this.programAttribVertexPosition = gl.getAttribLocation(this.program, "a_position");
-        gl.enableVertexAttribArray(this.programAttribVertexPosition);
         this.programAttribVertexColor = gl.getAttribLocation(this.program, "a_color");
-        gl.enableVertexAttribArray(this.programAttribVertexColor);
         // Program uniforms
         this.programUniformProjectionMatrix = gl.getUniformLocation(this.program, "u_projectionMatrix");
         this.programUniformModelViewMatrix = gl.getUniformLocation(this.program, "u_modelViewMatrix");
