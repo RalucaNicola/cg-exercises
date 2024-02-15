@@ -8,6 +8,10 @@ import { subclass } from "@arcgis/core/core/accessorSupport/decorators";
 import RenderNode from "@arcgis/core/views/3d/webgl/RenderNode";
 import ManagedFBO from "@arcgis/core/views/3d/webgl/ManagedFBO";
 import * as THREE from "three";
+import Mesh from '@arcgis/core/geometry/Mesh';
+import Point from '@arcgis/core/geometry/Point';
+import Graphic from '@arcgis/core/Graphic';
+import { FillSymbol3DLayer, MeshSymbol3D } from '@arcgis/core/symbols';
 
 const view = new SceneView({
     container: "viewDiv",
@@ -32,7 +36,6 @@ const view = new SceneView({
     },
 });
 
-
 @subclass("esri.views.3d.AddGeometryRenderPass")
 class AddGeometryRenderPass extends RenderNode {
     consumes: __esri.ConsumedNodes = { required: ["opaque-color"] };
@@ -42,30 +45,54 @@ class AddGeometryRenderPass extends RenderNode {
     localOrigin: Float32Array = new Float32Array([950763.6511, 6002193.8497, 450]);
     localOriginSR: __esri.SpatialReference = SpatialReference.WebMercator;
     localOriginRender: any = null;
-    renderer: THREE.WebGLRenderer;
+    threeRenderer: THREE.WebGLRenderer;
     threeScene: THREE.Scene;
     threeCamera: THREE.PerspectiveCamera;
     ambientLight: THREE.AmbientLight;
     directionalLight: THREE.DirectionalLight;
 
     initialize(): void {
-        this.addHandles(
-            watch(
-                () => this.view.ready,
-                (ready) => {
-                    if (ready) {
-                        this.setup();
-                    } else {
-                        this.dispose();
-                    }
-                },
-                { initial: true }
-            )
-        );
+        // this.addHandles(
+        //     watch(
+        //         () => this.view.ready,
+        //         (ready) => {
+        //             if (ready) {
+        //                 this.setup();
+        //             } else {
+        //                 this.dispose();
+        //             }
+        //         },
+        //         { initial: true }
+        //     )
+        // );
     }
 
     dispose() { }
     setup() {
+
+
+        this.threeRenderer = new THREE.WebGLRenderer({
+            context: this.gl
+        });
+        this.threeRenderer.autoClearDepth = false;
+        this.threeRenderer.autoClearColor = false;
+        this.threeRenderer.autoClearStencil = false;
+        this.threeRenderer.setSize(this.view.width, this.view.height);
+        this.threeRenderer.setPixelRatio(window.devicePixelRatio);
+
+        //const originalSetRenderTarget = this.threeRenderer.setRenderTarget.bind(this.threeRenderer);
+        // this method doesn't seem to get called...
+        // this.threeRenderer.setRenderTarget = function (target: THREE.WebGLRenderTarget) {
+        //     if (target) {
+        //         console.log("Running original", target);
+        //         originalSetRenderTarget(target);
+        //     }
+        //     else if (target === null) {
+        //         const output = this.bindRenderTarget();
+        //         console.log("Running custom", output);
+        //     }
+        // };
+
         this.threeScene = new THREE.Scene();
         this.threeCamera = new THREE.PerspectiveCamera();
         this.directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
@@ -82,21 +109,42 @@ class AddGeometryRenderPass extends RenderNode {
         cube.position.x = this.localOrigin[0];
         cube.position.y = this.localOrigin[1];
         cube.position.z = this.localOrigin[2];
-        console.log(cube);
         this.threeScene.add(cube);
+
     }
 
     override render(_inputs: ManagedFBO[]): ManagedFBO {
         this.resetWebGLState();
         const output = this.bindRenderTarget();
-        const gl = this.gl;
-        const c = this.camera;
-        this.renderer = new THREE.WebGLRenderer({
-            context: gl
-        });
-        this.renderer.setSize(this.view.width, this.view.height);
-        this.renderer.setPixelRatio(window.devicePixelRatio);
 
+        this.threeRenderer = new THREE.WebGLRenderer({
+            context: this.gl
+        });
+        this.threeRenderer.autoClearDepth = false;
+        this.threeRenderer.autoClearColor = false;
+        this.threeRenderer.autoClearStencil = false;
+        this.threeRenderer.setSize(this.view.width, this.view.height);
+        this.threeRenderer.setPixelRatio(window.devicePixelRatio);
+
+        this.threeScene = new THREE.Scene();
+        this.threeCamera = new THREE.PerspectiveCamera();
+        this.directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        this.ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        this.threeScene.add(
+            this.directionalLight,
+            this.ambientLight
+        );
+
+        // Create a cube
+        const geometry = new THREE.BoxGeometry(10, 10, 10);
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const cube = new THREE.Mesh(geometry, material);
+        cube.position.x = this.localOrigin[0];
+        cube.position.y = this.localOrigin[1];
+        cube.position.z = this.localOrigin[2];
+        this.threeScene.add(cube);
+
+        const c = this.camera;
         var direction = this.sunLight.direction;
         var diffuse = this.sunLight.diffuse;
         var ambient = this.sunLight.ambient;
@@ -112,8 +160,7 @@ class AddGeometryRenderPass extends RenderNode {
         this.threeCamera.up.set(c.up[0], c.up[1], c.up[2]);
         this.threeCamera.lookAt(new THREE.Vector3(c.center[0], c.center[1], c.center[2]));
         this.threeCamera.projectionMatrix.fromArray(c.projectionMatrix);
-        this.renderer.render(this.threeScene, this.threeCamera);
-        this.requestRender();
+        this.threeRenderer.render(this.threeScene, this.threeCamera);
 
         this.resetWebGLState();
         return output;
@@ -121,64 +168,3 @@ class AddGeometryRenderPass extends RenderNode {
 }
 
 new AddGeometryRenderPass({ view });
-
-function createCubeVertices(size: number) {
-    const k = size / 2;
-    const positions = new Float32Array([
-        k,
-        -k,
-        k, // 0
-        k,
-        k,
-        k, // 1
-        -k,
-        k,
-        k, // 2
-        -k,
-        -k,
-        k, // 3
-        k,
-        -k,
-        -k, // 4
-        k,
-        k,
-        -k, // 5
-        -k,
-        k,
-        -k, // 6
-        -k,
-        -k,
-        -k // 7
-    ]);
-    const colors = new Uint8Array([
-        255,
-        0,
-        0, // 0
-        0,
-        0,
-        255, // 1
-        0,
-        0,
-        255, // 2
-        255,
-        0,
-        0, // 3
-        255,
-        0,
-        0, // 4
-        0,
-        0,
-        255, // 5
-        0,
-        0,
-        255, // 6
-        255,
-        0,
-        0 // 7
-    ]);
-    const indices = new Uint16Array([
-        0, 1, 2, 0, 2, 3, 0, 5, 1, 0, 4, 5, 0, 7, 4, 0, 3, 7, 4, 6, 5, 4, 7, 6, 1, 5, 6, 1, 6, 2, 3, 6,
-        7, 3, 2, 6
-    ]);
-    return { positions, colors, indices };
-}

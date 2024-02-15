@@ -42,7 +42,6 @@ const layer = new CSVLayer({ url: "data/cambridge_bike_station_information.csv" 
 
 view.map.add(layer);
 
-window.view = view;
 
 interface SimplePoint {
     x: number;
@@ -65,7 +64,7 @@ function calculatePoints({ start, end }: { start: SimplePoint, end: SimplePoint 
     const new_xe = xe - xm;
     const new_ye = ye - ym;
     for (let i = 0; i < num_segments; i++) {
-        const color = Color.blendColors(new Color([252, 144, 3, 1]), new Color([3, 215, 252, 1]), i / num_segments);
+        const color = Color.blendColors(new Color([252, 144, 3, 0.1]), new Color([3, 215, 252, 1]), i / num_segments);
         const { r, g, b, a } = color;
         const n = num_segments - 1;
         const x = xs * i / n + xe * (n - i) / n;
@@ -83,8 +82,8 @@ function calculatePoints({ start, end }: { start: SimplePoint, end: SimplePoint 
 
 @subclass("esri.views.3d.AddGeometryRenderPass")
 class AddGeometryRenderNode extends RenderNode {
-    consumes: __esri.ConsumedNodes = { required: ["opaque-color"] };
-    produces: __esri.RenderNodeOutput = "opaque-color";
+    consumes: __esri.ConsumedNodes = { required: ["transparent-color"] };
+    produces: __esri.RenderNodeOutput = "transparent-color";
 
     points: Array<SimplePoint>;
     program: WebGLProgram;
@@ -170,8 +169,6 @@ class AddGeometryRenderNode extends RenderNode {
 
     initData() {
 
-        console.log(this.points);
-
         const gl = this.gl;
 
         this.localOriginRender = webgl.toRenderCoordinates(
@@ -224,6 +221,7 @@ class AddGeometryRenderNode extends RenderNode {
     override render(_inputs: ManagedFBO[]): ManagedFBO {
         this.resetWebGLState();
         const output = this.bindRenderTarget();
+        console.log(output, _inputs);
         const gl = this.gl;
         const time = performance.now();
 
@@ -249,7 +247,6 @@ class AddGeometryRenderNode extends RenderNode {
         for (let i = 0; i <= this.points.length; i += 20) {
             gl.drawArrays(gl.LINE_STRIP, i, 20);
         }
-        this.requestRender();
 
         this.resetWebGLState();
         return output;
@@ -266,7 +263,7 @@ interface Trip {
 Papa.parse("./data/trips_0109_cambridge.csv", {
     delimiter: ",", download: true, header: true, complete: (result) => {
 
-        const trips = result.data.slice(0, 200).map((trip: Trip) => {
+        const trips = result.data.map((trip: Trip) => {
             const { start_lng, start_lat, end_lng, end_lat } = trip;
             const [start_x, start_y] = webMercatorUtils.lngLatToXY(parseFloat(start_lng), parseFloat(start_lat));
             const [end_x, end_y] = webMercatorUtils.lngLatToXY(parseFloat(end_lng), parseFloat(end_lat));
